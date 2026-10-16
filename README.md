@@ -36,4 +36,20 @@ src/
 - `flowguard-supabase`: esquema y funciones de base de datos contra las que este código escribe/lee.
 - `flowguard-app`: consume estos módulos desde los Route Handlers.
 
-Este repo todavía no tiene código; está preparado para que Dev 1 y Dev 3 empiecen a trabajar siguiendo el Bloque 1 de [flowguard-docs/implementation-checklist.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/implementation-checklist.md).
+## Estado actual
+
+- **Dev 3 (agente, herramientas, Nebius):** esqueleto inicializado.
+  - `src/contracts/evidence-report.schema.ts` — contrato Zod del informe del agente (api-contracts.md § 10).
+  - `src/server/agent/` — `mockProvider.ts` (proveedor mock funcional y probado), `nebiusProvider.ts` (pendiente de implementar hasta completar security.md § 1.8), `validateReport.ts`, `prompt.ts`, selección por `AGENT_PROVIDER` en `index.ts`.
+  - `src/server/tools/` — firmas de las cinco herramientas de lectura; lanzan `NotImplementedError` hasta que Dev 1 publique `src/server/persistence/`.
+  - Prueba unitaria (`mockProvider.test.ts`) validando el mock contra el esquema — `npm test` pasa.
+- **Dev 1 (reglas, persistencia, API):** `src/server/rules/`, `src/server/executions/`, `src/server/persistence/` y `src/contracts/{payment,execution,engine}.schema.ts` **todavía no existen** en este repo — pendientes de implementación por Dev 1 siguiendo el Bloque 1 de [implementation-checklist.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/implementation-checklist.md).
+
+## Cómo correr lo que ya existe
+
+```bash
+npm install
+npm test        # vitest run
+npm run typecheck
+cp .env.example .env   # AGENT_PROVIDER=mock por defecto
+```
