@@ -50,7 +50,7 @@ src/
   - `src/server/agent/` — `mockProvider.ts` (proveedor mock funcional y probado), `nebiusProvider.ts` (pendiente de implementar hasta completar security.md § 1.8), `validateReport.ts`, `prompt.ts`, selección por `AGENT_PROVIDER` en `index.ts`.
   - `src/server/tools/` — firmas de las cinco herramientas de lectura; lanzan `NotImplementedError` hasta que Dev 1 publique `src/server/persistence/`.
   - Prueba unitaria (`mockProvider.test.ts`) validando el mock contra el esquema — `npm test` pasa.
-- **Dev 1 (reglas, persistencia, API):** `src/server/rules/`, `src/server/executions/`, `src/server/persistence/` y `src/contracts/{payment,execution,engine}.schema.ts` **todavía no existen** en este repo — pendientes de implementación por Dev 1 (los tres esquemas `payment`, `execution` y `engine` los propone Dev 5 y Dev 1 los valida) siguiendo el Bloque 1 de [implementation-checklist.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/implementation-checklist.md).
+- **Dev 1 (reglas, persistencia, API):** las carpetas `src/server/rules/`, `src/server/executions/`, `src/server/persistence/` y `src/shared/` **ya existen vacías** (con `.gitkeep`), listas para empezar. Todavía **no tienen código**, y `src/contracts/{payment,execution,engine}.schema.ts` **todavía no existen** — pendientes de implementación por Dev 1 (los tres esquemas `payment`, `execution` y `engine` los propone Dev 5 y Dev 1 los valida) siguiendo el Bloque 1 de [implementation-checklist.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/implementation-checklist.md).
 
 ## Cómo correr lo que ya existe
 
