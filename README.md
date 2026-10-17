@@ -2,7 +2,14 @@
 
 Backend modular de FlowGuard: contratos compartidos, motor de reglas determinista, persistencia, orquestación de ejecuciones y el servicio de IA (agente + herramientas de lectura + adaptador Nebius).
 
-**Responsables principales:** Dev 1 (reglas, persistencia, API) y Dev 3 (agente, herramientas, Nebius).
+**Responsables principales, por rutas:**
+
+- **Dev 3** (agente, herramientas, Nebius y NVIDIA): `src/server/agent/`, `src/server/tools/` y `src/contracts/evidence-report.schema.ts`.
+- **Dev 1** (reglas, persistencia, API): el resto del backend (`src/server/rules/`, `src/server/executions/`, `src/server/persistence/`, etc.).
+- **Dev 5** propone y mantiene `src/contracts/{payment,execution,engine}.schema.ts`; Dev 1 los valida. Dev 5 coordina la compatibilidad de los contratos compartidos sin apropiarse de las rutas de Dev 1 ni de Dev 3.
+- **Dev 4** mantiene los workflows de CI/CD que correspondan, sin ser propietario de los módulos funcionales.
+
+Las rutas definen propiedad de mantenimiento; los cambios que cruzan una frontera se acuerdan antes con el otro propietario. Detalle en [flowguard-docs/README.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/README.md#propiedad-por-rutas-en-flowguard-src).
 
 ## Alcance
 
@@ -43,7 +50,7 @@ src/
   - `src/server/agent/` — `mockProvider.ts` (proveedor mock funcional y probado), `nebiusProvider.ts` (pendiente de implementar hasta completar security.md § 1.8), `validateReport.ts`, `prompt.ts`, selección por `AGENT_PROVIDER` en `index.ts`.
   - `src/server/tools/` — firmas de las cinco herramientas de lectura; lanzan `NotImplementedError` hasta que Dev 1 publique `src/server/persistence/`.
   - Prueba unitaria (`mockProvider.test.ts`) validando el mock contra el esquema — `npm test` pasa.
-- **Dev 1 (reglas, persistencia, API):** `src/server/rules/`, `src/server/executions/`, `src/server/persistence/` y `src/contracts/{payment,execution,engine}.schema.ts` **todavía no existen** en este repo — pendientes de implementación por Dev 1 siguiendo el Bloque 1 de [implementation-checklist.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/implementation-checklist.md).
+- **Dev 1 (reglas, persistencia, API):** `src/server/rules/`, `src/server/executions/`, `src/server/persistence/` y `src/contracts/{payment,execution,engine}.schema.ts` **todavía no existen** en este repo — pendientes de implementación por Dev 1 (los tres esquemas `payment`, `execution` y `engine` los propone Dev 5 y Dev 1 los valida) siguiendo el Bloque 1 de [implementation-checklist.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/implementation-checklist.md).
 
 ## Cómo correr lo que ya existe
 
