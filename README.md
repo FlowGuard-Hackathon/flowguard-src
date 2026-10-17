@@ -4,9 +4,9 @@ Backend modular de FlowGuard: contratos compartidos, motor de reglas determinist
 
 **Responsables principales, por rutas:**
 
-- **Dev 3** (agente, herramientas, Nebius y NVIDIA): `src/server/agent/`, `src/server/tools/` y `src/contracts/evidence-report.schema.ts`.
-- **Dev 1** (reglas, persistencia, API): el resto del backend (`src/server/rules/`, `src/server/executions/`, `src/server/persistence/`, etc.).
-- **Dev 5** propone y mantiene `src/contracts/{payment,execution,engine}.schema.ts`; Dev 1 los valida. Dev 5 coordina la compatibilidad de los contratos compartidos sin apropiarse de las rutas de Dev 1 ni de Dev 3.
+- **Dev 3** (agente, herramientas, Nebius y NVIDIA): `src/servidor/agente/`, `src/servidor/herramientas/` y `src/contratos/informe-evidencias.schema.ts`.
+- **Dev 1** (reglas, persistencia, API): el resto del backend (`src/servidor/reglas/`, `src/servidor/ejecuciones/`, `src/servidor/persistencia/`, etc.).
+- **Dev 5** propone y mantiene `src/contratos/{pago,ejecucion,motor}.schema.ts`; Dev 1 los valida. Dev 5 coordina la compatibilidad de los contratos compartidos sin apropiarse de las rutas de Dev 1 ni de Dev 3.
 - **Dev 4** mantiene los workflows de CI/CD que correspondan, sin ser propietario de los módulos funcionales.
 
 Las rutas definen propiedad de mantenimiento; los cambios que cruzan una frontera se acuerdan antes con el otro propietario. Detalle en [flowguard-docs/README.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/README.md#propiedad-por-rutas-en-flowguard-src).
@@ -31,10 +31,10 @@ Ejecútalos desde la raíz del repositorio.
 | Para... | Comando | Resultado esperado |
 |---|---|---|
 | Instalar dependencias | `npm install` | Termina sin errores y crea `node_modules/` |
-| Crear tu `.env` local (PowerShell) | `Copy-Item .env.example .env` | Crea `.env` con `AGENT_PROVIDER=mock`. **Nunca se sube a Git** |
+| Crear tu `.env` local (PowerShell) | `Copy-Item .env.example .env` | Crea `.env` con `AGENTE_PROVEEDOR=simulado`. **Nunca se sube a Git** |
 | Crear tu `.env` local (Git Bash/Linux/macOS) | `cp .env.example .env` | Igual que el anterior |
-| Ejecutar todas las pruebas | `npm test` | `Test Files 1 passed`, `Tests 2 passed` (estado actual) |
-| Ejecutar una sola prueba | `npx vitest run src/server/agent/mockProvider.test.ts` | Esa prueba pasa |
+| Ejecutar todas las pruebas | `npm test` | `Test Files 2 passed`, `Tests 19 passed` (estado actual; es la salida de Vitest, en inglés) |
+| Ejecutar una sola prueba | `npx vitest run src/servidor/herramientas/herramientas.test.ts` | Esa suite pasa (17 pruebas) |
 | Pruebas en modo observación | `npm run test:watch` | Reejecuta al guardar; se detiene con `Ctrl+C` |
 | Comprobar tipos | `npm run typecheck` | Sin salida de error y código de salida 0 |
 
@@ -49,44 +49,46 @@ npm test
 npm run typecheck
 ```
 
-Toda lógica nueva lleva su prueba en Vitest. Una tarea no está terminada solo porque el código "debería funcionar": debe existir evidencia verificable ([definition-of-done.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/definition-of-done.md)). Un mock no cuenta como validación del proveedor real (Nebius) ni de Supabase real.
+Toda lógica nueva lleva su prueba en Vitest. Una tarea no está terminada solo porque el código "debería funcionar": debe existir evidencia verificable ([definicion-de-terminado.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/definicion-de-terminado.md)). Un mock no cuenta como validación del proveedor real (Nebius) ni de Supabase real.
 
 ### 4. Mapa de archivos
 
 | Ruta | Propietario | Estado |
 |---|---|---|
-| `src/contracts/evidence-report.schema.ts` | Dev 3 | Existe (contrato Zod del informe del agente) |
-| `src/contracts/{payment,execution,engine}.schema.ts` | Dev 5 propone, Dev 1 valida | **No existen todavía** |
-| `src/server/agent/` | Dev 3 | `mockProvider.ts` funcional y probado; `nebiusProvider.ts` pendiente; `validateReport.ts`, `prompt.ts`, `types.ts`, `index.ts` (selecciona proveedor con `AGENT_PROVIDER`) |
-| `src/server/tools/` | Dev 3 | Firmas de las 5 herramientas de lectura; lanzan `NotImplementedError` |
-| `src/server/rules/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
-| `src/server/executions/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
-| `src/server/persistence/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
-| `src/shared/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
+| `src/contratos/informe-evidencias.schema.ts` | Dev 3 | Existe (contrato Zod del informe del agente) |
+| `src/contratos/{pago,ejecucion,motor}.schema.ts` | Dev 5 propone, Dev 1 valida | **No existen todavía** |
+| `src/servidor/agente/` | Dev 3 | `proveedorSimulado.ts` funcional y probado; `proveedorNebius.ts` pendiente; `validarInforme.ts`, `prompt.ts`, `tipos.ts`, `index.ts` (selecciona proveedor con `AGENTE_PROVEEDOR`) |
+| `src/servidor/herramientas/` | Dev 3 | 5 herramientas de lectura implementadas sobre la interfaz `FuenteDatosHerramientas`, con mock en memoria y 17 pruebas. Falta la implementación real de Dev 1: ver `src/servidor/herramientas/README.md` |
+| `src/mensajes/` | Compartido | Catálogo de textos visibles (`es.ts`). Para otro idioma se agrega otro archivo con el mismo tipo |
+| `src/servidor/reglas/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
+| `src/servidor/ejecuciones/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
+| `src/servidor/persistencia/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
+| `src/compartido/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
 | `.env.example` | Compartido | Variables documentadas, con valores de ejemplo |
 
 ### 5. Qué hacer ahora
 
-**Dev 1 (Bloque 1, días 1–3)** — detalle en [developers/developer-1/work-plan.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/developers/developer-1/work-plan.md):
+**Dev 1 (Bloque 1, días 1–3)** — detalle en [desarrolladores/desarrollador-1/plan-trabajo.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/desarrolladores/desarrollador-1/plan-trabajo.md):
 
-1. Implementar el motor en `src/server/rules/` con la firma de [rules.md § 1](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/rules.md#1-principios-de-implementación): `evaluatePayment(request, trustedContext, policySnapshot): EngineDecision`.
-2. Implementar las cinco reglas `PAY-001` a `PAY-005` en orden estable. Cada resultado incluye: identificador y versión de regla, estado (`PASS`, `FAIL` o `INDETERMINATE`), datos observados, datos esperados, mensaje explicativo, referencias a evidencia y severidad.
-3. Hacer pasar los 10 casos de [rules.md § 4](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/rules.md#4-casos-de-prueba-obligatorios) con Vitest.
-4. Aplicar la migración `001_initial_schema.sql` de `flowguard-supabase` en un proyecto Supabase de desarrollo.
+1. Implementar el motor en `src/servidor/reglas/` con la firma de [reglas.md § 1](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/reglas.md#1-principios-de-implementación): `evaluarPago(solicitud, contextoConfiable, instantaneaPolitica): DecisionMotor`.
+2. Implementar las cinco reglas `PAG-001` a `PAG-005` en orden estable. Cada resultado incluye: identificador y versión de regla, estado (`CUMPLE`, `NO_CUMPLE` o `INDETERMINADO`), datos observados, datos esperados, mensaje explicativo, referencias a evidencia y severidad.
+3. Hacer pasar los 10 casos de [reglas.md § 4](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/reglas.md#4-casos-de-prueba-obligatorios) con Vitest.
+4. Aplicar la migración `001_esquema_inicial.sql` de `flowguard-supabase` en un proyecto Supabase de desarrollo.
+5. Cuando haya persistencia: implementar `FuenteDatosHerramientas` en `src/servidor/persistencia/` (solo lectura) y contestar las preguntas abiertas de [src/servidor/herramientas/README.md](src/servidor/herramientas/README.md). Con eso las herramientas del agente pasan de datos simulados a datos reales sin tocar `src/servidor/herramientas/`.
 
-**Dev 3 (días 3–5)** — detalle en [developers/developer-3/work-plan.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/developers/developer-3/work-plan.md): cerrar la fixture `investigation-failed.json` con Dev 5, implementar las cinco herramientas de lectura contra datos mock y luego contra datos reales, cuando Dev 1 publique la persistencia.
+**Dev 3 (días 3–5)** — detalle en [desarrolladores/desarrollador-3/plan-trabajo.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/desarrolladores/desarrollador-3/plan-trabajo.md): las cinco herramientas ya funcionan contra datos simulados (día 4). Pendiente: cerrar la fixture `investigacion-fallida.json` con Dev 5 y conectar a datos reales cuando Dev 1 publique la persistencia (día 5).
 
-**Bloqueo conocido:** los contratos `payment`, `execution` y `engine` no existen. No los inventes ni los cambies por tu cuenta: los propone Dev 5 y los valida Dev 1. Mientras tanto, guíate por [api-contracts.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/api-contracts.md).
+**Bloqueo conocido:** los contratos `pago`, `ejecucion` y `motor` no existen. No los inventes ni los cambies por tu cuenta: los propone Dev 5 y los valida Dev 1. Mientras tanto, guíate por [contratos-api.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/contratos-api.md).
 
 ### 6. Reglas obligatorias
 
 - **Respeta la propiedad por rutas.** No edites rutas de otro puesto sin acordarlo antes con su propietario.
-- **El motor determinista decide.** Debe ser una biblioteca independiente: no importa React, el cliente de Nebius ni código del frontend ([rules.md § 1](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/rules.md#1-principios-de-implementación)). No cambies las reglas ni sus umbrales. `ALLOW` solo si todas las comprobaciones obligatorias pasan; `BLOCK` si alguna falla o queda `INDETERMINATE`.
-- **El agente solo investiga.** No puede autorizar pagos, cambiar reglas, escribir en la base de datos mediante herramientas ni sustituir al motor ([security.md § 1](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/security.md)). Las herramientas son de solo lectura. La ausencia de evidencia nunca se interpreta como cumplimiento.
-- **Persistencia:** usa las funciones de [database.md § 5](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/database.md) (`fn_schedule_investigation_attempt`, `fn_finalize_investigation_attempt`, `fn_reap_abandoned_attempts`, `fn_check_rate_limit`) en lugar de SQL ad hoc. No modifiques la migración desde este repo.
-- **Dinero:** la conversión de pesos a centavos (`amount_minor`) pasa por una única función centralizada ([api-contracts.md § 2](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/api-contracts.md#2-conversión-e-idempotencia-reglas-transversales)).
+- **El motor determinista decide.** Debe ser una biblioteca independiente: no importa React, el cliente de Nebius ni código del frontend ([reglas.md § 1](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/reglas.md#1-principios-de-implementación)). No cambies las reglas ni sus umbrales. `PERMITIR` solo si todas las comprobaciones obligatorias pasan; `BLOQUEAR` si alguna falla o queda `INDETERMINADO`.
+- **El agente solo investiga.** No puede autorizar pagos, cambiar reglas, escribir en la base de datos mediante herramientas ni sustituir al motor ([seguridad.md § 1](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/seguridad.md)). Las herramientas son de solo lectura. La ausencia de evidencia nunca se interpreta como cumplimiento.
+- **Persistencia:** usa las funciones de [base-datos.md § 5](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/base-datos.md) (`fn_programar_intento_investigacion`, `fn_finalizar_intento_investigacion`, `fn_recuperar_intentos_abandonados`, `fn_verificar_limite_solicitudes`) en lugar de SQL ad hoc. No modifiques la migración desde este repo.
+- **Dinero:** la conversión de pesos a centavos (`monto_centavos`) pasa por una única función centralizada ([contratos-api.md § 2](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/contratos-api.md#2-conversión-e-idempotencia-reglas-transversales)).
 - **Validación:** valida con Zod en los bordes. No cambies endpoints, campos, estados ni formatos de error documentados.
-- **Secretos:** nunca subas `.env` ni claves reales. `.env.example` solo lleva valores de ejemplo. No hagas llamadas reales a Nebius sin credenciales válidas y sin completar la checklist de [security.md § 1.8](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/security.md#18-lista-de-verificación-de-compatibilidad-con-nebius); mientras tanto `AGENT_PROVIDER=mock`.
+- **Secretos:** nunca subas `.env` ni claves reales. `.env.example` solo lleva valores de ejemplo. No hagas llamadas reales a Nebius sin credenciales válidas y sin completar la checklist de [seguridad.md § 1.8](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/seguridad.md#18-lista-de-verificación-de-compatibilidad-con-nebius); mientras tanto `AGENTE_PROVEEDOR=simulado`.
 - **No agregues** dependencias, frameworks, lint o scripts nuevos sin acordarlo con el propietario de la ruta.
 
 ### 7. Flujo de Git
@@ -98,30 +100,30 @@ Toda lógica nueva lleva su prueba en Vitest. Una tarea no está terminada solo 
 
 ## Alcance
 
-Según [flowguard-docs/architecture.md § 3](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/architecture.md#3-estructura-del-repositorio), este repo corresponde a la carpeta `src/`:
+Según [flowguard-docs/arquitectura.md § 3](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/arquitectura.md#3-estructura-del-repositorio), este repo corresponde a la carpeta `src/`:
 
 ```
 src/
-├── contracts/
-│   ├── payment.schema.ts
-│   ├── execution.schema.ts
-│   ├── engine.schema.ts
-│   └── evidence-report.schema.ts
-├── server/
-│   ├── rules/
-│   ├── executions/
-│   ├── persistence/
-│   ├── agent/
-│   └── tools/
-└── shared/
+├── contratos/
+│   ├── pago.schema.ts
+│   ├── ejecucion.schema.ts
+│   ├── motor.schema.ts
+│   └── informe-evidencias.schema.ts
+├── servidor/
+│   ├── reglas/
+│   ├── ejecuciones/
+│   ├── persistencia/
+│   ├── agente/
+│   └── herramientas/
+└── compartido/
 ```
 
 ## Documentos de referencia obligatorios antes de escribir código
 
-- [flowguard-docs/rules.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/rules.md) — las cinco reglas de negocio.
-- [flowguard-docs/database.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/database.md) — modelo de datos, estados, y las funciones PL/pgSQL (`fn_schedule_investigation_attempt`, `fn_finalize_investigation_attempt`, `fn_reap_abandoned_attempts`) que `src/server/persistence/` y `src/server/executions/` deben invocar.
-- [flowguard-docs/security.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/security.md) — ciclo de investigación del agente, prompt, límites, y rate limiting (`fn_check_rate_limit`).
-- [flowguard-docs/api-contracts.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/api-contracts.md) — contratos exactos que `src/contracts/` debe reflejar en Zod.
+- [flowguard-docs/reglas.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/reglas.md) — las cinco reglas de negocio.
+- [flowguard-docs/base-datos.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/base-datos.md) — modelo de datos, estados, y las funciones PL/pgSQL (`fn_programar_intento_investigacion`, `fn_finalizar_intento_investigacion`, `fn_recuperar_intentos_abandonados`) que `src/servidor/persistencia/` y `src/servidor/ejecuciones/` deben invocar.
+- [flowguard-docs/seguridad.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/seguridad.md) — ciclo de investigación del agente, prompt, límites, y rate limiting (`fn_verificar_limite_solicitudes`).
+- [flowguard-docs/contratos-api.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/contratos-api.md) — contratos exactos que `src/contratos/` debe reflejar en Zod.
 
 ## Dependencias de otros repos
 
@@ -132,8 +134,8 @@ src/
 ## Estado actual
 
 - **Dev 3 (agente, herramientas, Nebius):** esqueleto inicializado.
-  - `src/contracts/evidence-report.schema.ts` — contrato Zod del informe del agente (api-contracts.md § 10).
-  - `src/server/agent/` — `mockProvider.ts` (proveedor mock funcional y probado), `nebiusProvider.ts` (pendiente de implementar hasta completar security.md § 1.8), `validateReport.ts`, `prompt.ts`, selección por `AGENT_PROVIDER` en `index.ts`.
-  - `src/server/tools/` — firmas de las cinco herramientas de lectura; lanzan `NotImplementedError` hasta que Dev 1 publique `src/server/persistence/`.
-  - Prueba unitaria (`mockProvider.test.ts`) validando el mock contra el esquema — `npm test` pasa.
-- **Dev 1 (reglas, persistencia, API):** las carpetas `src/server/rules/`, `src/server/executions/`, `src/server/persistence/` y `src/shared/` **ya existen vacías** (con `.gitkeep`), listas para empezar. Todavía **no tienen código**, y `src/contracts/{payment,execution,engine}.schema.ts` **todavía no existen** — pendientes de implementación por Dev 1 (los tres esquemas `payment`, `execution` y `engine` los propone Dev 5 y Dev 1 los valida) siguiendo el Bloque 1 de [implementation-checklist.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/implementation-checklist.md).
+  - `src/contratos/informe-evidencias.schema.ts` — contrato Zod del informe del agente (contratos-api.md § 10).
+  - `src/servidor/agente/` — `proveedorSimulado.ts` (proveedor mock funcional y probado), `proveedorNebius.ts` (pendiente de implementar hasta completar seguridad.md § 1.8), `validarInforme.ts`, `prompt.ts`, selección por `AGENTE_PROVEEDOR` en `index.ts`.
+  - `src/servidor/herramientas/` — las cinco herramientas de lectura, con parámetros validados con Zod y errores del catálogo, sobre la interfaz `FuenteDatosHerramientas`. Hoy corren con un mock en memoria (`FuenteDatosEnMemoria`); Dev 1 publica la implementación real.
+  - Pruebas: `proveedorSimulado.test.ts` (informe simulado contra el esquema) y `herramientas.test.ts` (las cinco herramientas) — `npm test` pasa 19/19.
+- **Dev 1 (reglas, persistencia, API):** las carpetas `src/servidor/reglas/`, `src/servidor/ejecuciones/`, `src/servidor/persistencia/` y `src/compartido/` **ya existen vacías** (con `.gitkeep`), listas para empezar. Todavía **no tienen código**, y `src/contratos/{pago,ejecucion,motor}.schema.ts` **todavía no existen** — pendientes de implementación por Dev 1 (los tres esquemas `pago`, `ejecucion` y `motor` los propone Dev 5 y Dev 1 los valida) siguiendo el Bloque 1 de [checklist-implementacion.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/checklist-implementacion.md).
