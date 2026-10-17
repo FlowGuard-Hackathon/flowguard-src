@@ -33,8 +33,8 @@ Ejecútalos desde la raíz del repositorio.
 | Instalar dependencias | `npm install` | Termina sin errores y crea `node_modules/` |
 | Crear tu `.env` local (PowerShell) | `Copy-Item .env.example .env` | Crea `.env` con `AGENTE_PROVEEDOR=simulado`. **Nunca se sube a Git** |
 | Crear tu `.env` local (Git Bash/Linux/macOS) | `cp .env.example .env` | Igual que el anterior |
-| Ejecutar todas las pruebas | `npm test` | `Test Files 1 cumplidas`, `Tests 2 cumplidas` (estado actual) |
-| Ejecutar una sola prueba | `npx vitest run src/servidor/agente/proveedorSimulado.test.ts` | Esa prueba pasa |
+| Ejecutar todas las pruebas | `npm test` | `Test Files 2 passed`, `Tests 19 passed` (estado actual; es la salida de Vitest, en inglés) |
+| Ejecutar una sola prueba | `npx vitest run src/servidor/herramientas/herramientas.test.ts` | Esa suite pasa (17 pruebas) |
 | Pruebas en modo observación | `npm run test:watch` | Reejecuta al guardar; se detiene con `Ctrl+C` |
 | Comprobar tipos | `npm run typecheck` | Sin salida de error y código de salida 0 |
 
@@ -57,8 +57,9 @@ Toda lógica nueva lleva su prueba en Vitest. Una tarea no está terminada solo 
 |---|---|---|
 | `src/contratos/informe-evidencias.schema.ts` | Dev 3 | Existe (contrato Zod del informe del agente) |
 | `src/contratos/{pago,ejecucion,motor}.schema.ts` | Dev 5 propone, Dev 1 valida | **No existen todavía** |
-| `src/servidor/agente/` | Dev 3 | `proveedorSimulado.ts` funcional y probado; `proveedorNebius.ts` pendiente; `validarInforme.ts`, `prompt.ts`, `types.ts`, `index.ts` (selecciona proveedor con `AGENTE_PROVEEDOR`) |
-| `src/servidor/herramientas/` | Dev 3 | Firmas de las 5 herramientas de lectura; lanzan `ErrorNoImplementada` |
+| `src/servidor/agente/` | Dev 3 | `proveedorSimulado.ts` funcional y probado; `proveedorNebius.ts` pendiente; `validarInforme.ts`, `prompt.ts`, `tipos.ts`, `index.ts` (selecciona proveedor con `AGENTE_PROVEEDOR`) |
+| `src/servidor/herramientas/` | Dev 3 | 5 herramientas de lectura implementadas sobre la interfaz `FuenteDatosHerramientas`, con mock en memoria y 17 pruebas. Falta la implementación real de Dev 1: ver `src/servidor/herramientas/README.md` |
+| `src/mensajes/` | Compartido | Catálogo de textos visibles (`es.ts`). Para otro idioma se agrega otro archivo con el mismo tipo |
 | `src/servidor/reglas/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
 | `src/servidor/ejecuciones/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
 | `src/servidor/persistencia/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
@@ -73,8 +74,9 @@ Toda lógica nueva lleva su prueba en Vitest. Una tarea no está terminada solo 
 2. Implementar las cinco reglas `PAG-001` a `PAG-005` en orden estable. Cada resultado incluye: identificador y versión de regla, estado (`CUMPLE`, `NO_CUMPLE` o `INDETERMINADO`), datos observados, datos esperados, mensaje explicativo, referencias a evidencia y severidad.
 3. Hacer pasar los 10 casos de [reglas.md § 4](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/reglas.md#4-casos-de-prueba-obligatorios) con Vitest.
 4. Aplicar la migración `001_esquema_inicial.sql` de `flowguard-supabase` en un proyecto Supabase de desarrollo.
+5. Cuando haya persistencia: implementar `FuenteDatosHerramientas` en `src/servidor/persistencia/` (solo lectura) y contestar las preguntas abiertas de [src/servidor/herramientas/README.md](src/servidor/herramientas/README.md). Con eso las herramientas del agente pasan de datos simulados a datos reales sin tocar `src/servidor/herramientas/`.
 
-**Dev 3 (días 3–5)** — detalle en [desarrolladores/desarrollador-3/plan-trabajo.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/desarrolladores/desarrollador-3/plan-trabajo.md): cerrar la fixture `investigacion-fallida.json` con Dev 5, implementar las cinco herramientas de lectura contra datos mock y luego contra datos reales, cuando Dev 1 publique la persistencia.
+**Dev 3 (días 3–5)** — detalle en [desarrolladores/desarrollador-3/plan-trabajo.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/desarrolladores/desarrollador-3/plan-trabajo.md): las cinco herramientas ya funcionan contra datos simulados (día 4). Pendiente: cerrar la fixture `investigacion-fallida.json` con Dev 5 y conectar a datos reales cuando Dev 1 publique la persistencia (día 5).
 
 **Bloqueo conocido:** los contratos `pago`, `ejecucion` y `motor` no existen. No los inventes ni los cambies por tu cuenta: los propone Dev 5 y los valida Dev 1. Mientras tanto, guíate por [contratos-api.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/contratos-api.md).
 
@@ -134,6 +136,6 @@ src/
 - **Dev 3 (agente, herramientas, Nebius):** esqueleto inicializado.
   - `src/contratos/informe-evidencias.schema.ts` — contrato Zod del informe del agente (contratos-api.md § 10).
   - `src/servidor/agente/` — `proveedorSimulado.ts` (proveedor mock funcional y probado), `proveedorNebius.ts` (pendiente de implementar hasta completar seguridad.md § 1.8), `validarInforme.ts`, `prompt.ts`, selección por `AGENTE_PROVEEDOR` en `index.ts`.
-  - `src/servidor/herramientas/` — firmas de las cinco herramientas de lectura; lanzan `ErrorNoImplementada` hasta que Dev 1 publique `src/servidor/persistencia/`.
-  - Prueba unitaria (`proveedorSimulado.test.ts`) validando el mock contra el esquema — `npm test` pasa.
+  - `src/servidor/herramientas/` — las cinco herramientas de lectura, con parámetros validados con Zod y errores del catálogo, sobre la interfaz `FuenteDatosHerramientas`. Hoy corren con un mock en memoria (`FuenteDatosEnMemoria`); Dev 1 publica la implementación real.
+  - Pruebas: `proveedorSimulado.test.ts` (informe simulado contra el esquema) y `herramientas.test.ts` (las cinco herramientas) — `npm test` pasa 19/19.
 - **Dev 1 (reglas, persistencia, API):** las carpetas `src/servidor/reglas/`, `src/servidor/ejecuciones/`, `src/servidor/persistencia/` y `src/compartido/` **ya existen vacías** (con `.gitkeep`), listas para empezar. Todavía **no tienen código**, y `src/contratos/{pago,ejecucion,motor}.schema.ts` **todavía no existen** — pendientes de implementación por Dev 1 (los tres esquemas `pago`, `ejecucion` y `motor` los propone Dev 5 y Dev 1 los valida) siguiendo el Bloque 1 de [checklist-implementacion.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/checklist-implementacion.md).

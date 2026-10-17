@@ -35,8 +35,13 @@ Reglas obligatorias:
     },
   },
   herramientas: {
-    noImplementada: (herramienta: string) =>
-      `${herramienta} no está implementada todavía: depende de src/servidor/persistencia/ (Dev 1).`,
+    errores: {
+      parametrosInvalidos: (campos: string) => `Parámetros inválidos: ${campos}.`,
+      ejecucionNoExiste: "La ejecución no existe.",
+      evidenciaNoExiste: "La referencia de evidencia no existe para esa ejecución.",
+      reglaSinConfiguracion: "La regla no tiene configuración.",
+      accesoDatosNoDisponible: "El acceso a datos no está disponible.",
+    },
   },
 };
 
