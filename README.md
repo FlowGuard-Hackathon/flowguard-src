@@ -33,12 +33,14 @@ Ejecútalos desde la raíz del repositorio.
 | Instalar dependencias | `npm install` | Termina sin errores y crea `node_modules/` |
 | Crear tu `.env` local (PowerShell) | `Copy-Item .env.example .env` | Crea `.env` con `AGENTE_PROVEEDOR=simulado`. **Nunca se sube a Git** |
 | Crear tu `.env` local (Git Bash/Linux/macOS) | `cp .env.example .env` | Igual que el anterior |
-| Ejecutar todas las pruebas | `npm test` | `Test Files 2 passed`, `Tests 19 passed` (estado actual; es la salida de Vitest, en inglés) |
+| Ejecutar todas las pruebas | `npm test` | `Test Files 5 passed`, `Tests 38 passed` (estado actual; es la salida de Vitest, en inglés) |
 | Ejecutar una sola prueba | `npx vitest run src/servidor/herramientas/herramientas.test.ts` | Esa suite pasa (17 pruebas) |
+| Ejecutar el flujo completo (motor → persistencia → agente) | `npx vitest run src/servidor/ejecuciones/flujoCompleto.test.ts` | 2 pruebas: pago bloqueado e informe `PARCIAL`; pago permitido e informe `COMPLETADA` |
 | Pruebas en modo observación | `npm run test:watch` | Reejecuta al guardar; se detiene con `Ctrl+C` |
 | Comprobar tipos | `npm run typecheck` | Sin salida de error y código de salida 0 |
+| Compilar (`src/` → `dist/`) | `npm run build` | `tsc -p tsconfig.build.json` sin errores; genera `dist/` (en `.gitignore`, nunca se sube). **Excluye los `*.test.ts`** |
 
-No existen scripts de `build`, `lint` ni `start`. No los inventes ni los agregues sin acordarlo con el propietario de la ruta.
+`npm run build` es necesario para que `flowguard-app` (o cualquier otro repo) pueda consumir este paquete: `package.json` apunta `main`/`exports` a `dist/index.js`, no a `src/`. Si cambias código en `src/`, repite `npm run build` para que quien dependa de este paquete vea el cambio. No existen scripts de `lint` ni `start`. No agregues otros sin acordarlo con el propietario de la ruta.
 
 ### 3. Antes de dar una tarea por terminada
 
@@ -60,25 +62,36 @@ Toda lógica nueva lleva su prueba en Vitest. Una tarea no está terminada solo 
 | `src/servidor/agente/` | Dev 3 | `proveedorSimulado.ts` funcional y probado; `proveedorNebius.ts` pendiente; `validarInforme.ts`, `prompt.ts`, `tipos.ts`, `index.ts` (selecciona proveedor con `AGENTE_PROVEEDOR`) |
 | `src/servidor/herramientas/` | Dev 3 | 5 herramientas de lectura implementadas sobre la interfaz `FuenteDatosHerramientas`, con mock en memoria y 17 pruebas. Falta la implementación real de Dev 1: ver `src/servidor/herramientas/README.md` |
 | `src/mensajes/` | Compartido | Catálogo de textos visibles (`es.ts`). Para otro idioma se agrega otro archivo con el mismo tipo |
-| `src/servidor/reglas/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
-| `src/servidor/ejecuciones/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
-| `src/servidor/persistencia/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
+| `src/servidor/reglas/` | Dev 1 | `motor.ts` — `evaluarPago()` con las cinco reglas `PAG-001..005` en orden estable, sin I/O. 12 pruebas, incluidos los 10 casos obligatorios de reglas.md § 4 |
+| `src/servidor/persistencia/` | Dev 1 | `fuenteDatosMemoria.ts` — implementación **en memoria** (no Supabase todavía) de `FuenteDatosHerramientas` (la interfaz de Dev 3). 5 pruebas |
+| `src/servidor/ejecuciones/` | Dev 1 | `crearEjecucion.ts` (motor → evidencia → persistencia) e `investigarEjecucion.ts` (llama al agente de Dev 3 con la ejecución ya persistida). 2 pruebas de integración end-to-end |
 | `src/compartido/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
+| `src/index.ts` | Dev 1 | Punto de entrada público del paquete (lo que importa `flowguard-src` desde otro repo). Reexporta `crearEjecucion`, `investigarEjecucion`, `FuenteDatosMemoria`, `evaluarPago` y sus tipos |
 | `.env.example` | Compartido | Variables documentadas, con valores de ejemplo |
+
+## Consumido como dependencia local desde flowguard-app
+
+`flowguard-app` ya depende de este paquete (`"flowguard-src": "file:../flowguard-src"`) para una ruta de prueba (`app/api/v1/ejecuciones/route.ts` + `app/probar-backend/`, ver su README). Para que funcione:
+
+1. Este repo debe estar compilado: `npm run build` (genera `dist/`, lo único que `flowguard-app` importa).
+2. Debe existir como carpeta **hermana** de `flowguard-app` (mismo directorio padre).
+3. Después de cambiar código aquí, hay que repetir `npm run build` para que el otro repo vea el cambio (no hay watch automático entre repos).
+
+Detalle de un bug de Turbopack en Windows con esta dependencia local (y su solución) en el README de `flowguard-app`, § 2.
 
 ### 5. Qué hacer ahora
 
-**Dev 1 (Bloque 1, días 1–3)** — detalle en [desarrolladores/desarrollador-1/plan-trabajo.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/desarrolladores/desarrollador-1/plan-trabajo.md):
+**Dev 1 — ya avanzado:**
 
-1. Implementar el motor en `src/servidor/reglas/` con la firma de [reglas.md § 1](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/reglas.md#1-principios-de-implementación): `evaluarPago(solicitud, contextoConfiable, instantaneaPolitica): DecisionMotor`.
-2. Implementar las cinco reglas `PAG-001` a `PAG-005` en orden estable. Cada resultado incluye: identificador y versión de regla, estado (`CUMPLE`, `NO_CUMPLE` o `INDETERMINADO`), datos observados, datos esperados, mensaje explicativo, referencias a evidencia y severidad.
-3. Hacer pasar los 10 casos de [reglas.md § 4](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/reglas.md#4-casos-de-prueba-obligatorios) con Vitest.
-4. Aplicar la migración `001_esquema_inicial.sql` de `flowguard-supabase` en un proyecto Supabase de desarrollo.
-5. Cuando haya persistencia: implementar `FuenteDatosHerramientas` en `src/servidor/persistencia/` (solo lectura) y contestar las preguntas abiertas de [src/servidor/herramientas/README.md](src/servidor/herramientas/README.md). Con eso las herramientas del agente pasan de datos simulados a datos reales sin tocar `src/servidor/herramientas/`.
+1. ✅ Motor de reglas (`src/servidor/reglas/motor.ts`): `evaluarPago(solicitud, contextoConfiable, instantaneaPolitica)`, sin I/O, 12 pruebas (incluye los 10 casos obligatorios de [reglas.md § 4](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/reglas.md#4-casos-de-prueba-obligatorios)).
+2. ✅ `FuenteDatosHerramientas` implementada **en memoria** en `src/servidor/persistencia/fuenteDatosMemoria.ts` (no contra Supabase real todavía — eso sigue pendiente, ver punto 4).
+3. ✅ Orquestación mínima en `src/servidor/ejecuciones/`: `crearEjecucion()` (motor → evidencia → persistencia) e `investigarEjecucion()` (llama al agente de Dev 3 con la ejecución real). Prueba end-to-end en `flujoCompleto.test.ts`.
+4. **Pendiente:** aplicar la migración `001_esquema_inicial.sql` de `flowguard-supabase` en un proyecto Supabase real y reemplazar `FuenteDatosMemoria` por una `FuenteDatosSupabase` — eso sí requiere credenciales y decide las [preguntas abiertas de `src/servidor/herramientas/README.md`](src/servidor/herramientas/README.md) (`refs_evidencia`, `autorizacion_verificada`, formato de `configuracion_json`).
+5. **Pendiente:** endpoints HTTP (`POST /api/v1/ejecuciones`, etc.) — hoy `crearEjecucion`/`investigarEjecucion` se llaman directo desde las pruebas, no desde una ruta.
 
-**Dev 3 (días 3–5)** — detalle en [desarrolladores/desarrollador-3/plan-trabajo.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/desarrolladores/desarrollador-3/plan-trabajo.md): las cinco herramientas ya funcionan contra datos simulados (día 4). Pendiente: cerrar la fixture `investigacion-fallida.json` con Dev 5 y conectar a datos reales cuando Dev 1 publique la persistencia (día 5).
+**Dev 3 (días 3–5)** — detalle en [desarrolladores/desarrollador-3/plan-trabajo.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/desarrolladores/desarrollador-3/plan-trabajo.md): las cinco herramientas ya funcionan contra datos simulados (día 4) **y** contra la implementación en memoria de Dev 1 (verificado en `fuenteDatosMemoria.test.ts`). Pendiente: cerrar la fixture `investigacion-fallida.json` con Dev 5 y la implementación real contra Supabase (punto 4 de arriba).
 
-**Bloqueo conocido:** los contratos `pago`, `ejecucion` y `motor` no existen. No los inventes ni los cambies por tu cuenta: los propone Dev 5 y los valida Dev 1. Mientras tanto, guíate por [contratos-api.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/contratos-api.md).
+**Bloqueo conocido:** los contratos `pago`, `ejecucion` y `motor` siguen sin existir como esquemas Zod compartidos (`src/contratos/`). Mientras tanto, `src/servidor/reglas/tipos.ts` y `src/servidor/ejecuciones/` usan tipos **provisionales**, documentados como tales en el código — no los asumas como el contrato final. No los cambies por tu cuenta: los propone Dev 5 y los valida Dev 1. Guíate por [contratos-api.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/contratos-api.md).
 
 ### 6. Reglas obligatorias
 
@@ -137,5 +150,11 @@ src/
   - `src/contratos/informe-evidencias.schema.ts` — contrato Zod del informe del agente (contratos-api.md § 10).
   - `src/servidor/agente/` — `proveedorSimulado.ts` (proveedor mock funcional y probado), `proveedorNebius.ts` (pendiente de implementar hasta completar seguridad.md § 1.8), `validarInforme.ts`, `prompt.ts`, selección por `AGENTE_PROVEEDOR` en `index.ts`.
   - `src/servidor/herramientas/` — las cinco herramientas de lectura, con parámetros validados con Zod y errores del catálogo, sobre la interfaz `FuenteDatosHerramientas`. Hoy corren con un mock en memoria (`FuenteDatosEnMemoria`); Dev 1 publica la implementación real.
-  - Pruebas: `proveedorSimulado.test.ts` (informe simulado contra el esquema) y `herramientas.test.ts` (las cinco herramientas) — `npm test` pasa 19/19.
-- **Dev 1 (reglas, persistencia, API):** las carpetas `src/servidor/reglas/`, `src/servidor/ejecuciones/`, `src/servidor/persistencia/` y `src/compartido/` **ya existen vacías** (con `.gitkeep`), listas para empezar. Todavía **no tienen código**, y `src/contratos/{pago,ejecucion,motor}.schema.ts` **todavía no existen** — pendientes de implementación por Dev 1 (los tres esquemas `pago`, `ejecucion` y `motor` los propone Dev 5 y Dev 1 los valida) siguiendo el Bloque 1 de [checklist-implementacion.md](https://github.com/FlowGuard-Hackathon/flowguard-docs/blob/main/checklist-implementacion.md).
+  - Pruebas: `proveedorSimulado.test.ts` (informe simulado contra el esquema) y `herramientas.test.ts` (las cinco herramientas) — 19 de las 38 pruebas totales del repo (`npm test`).
+- **Dev 1 (reglas, persistencia, ejecuciones):**
+  - `src/servidor/reglas/motor.ts` — `evaluarPago()` con las cinco reglas, sin I/O, 12 pruebas.
+  - `src/servidor/persistencia/fuenteDatosMemoria.ts` — `FuenteDatosHerramientas` en memoria (no Supabase real), 5 pruebas.
+  - `src/servidor/ejecuciones/` — `crearEjecucion()` + `investigarEjecucion()`, orquestando el flujo completo y llamando al agente de Dev 3 con datos reales de la ejecución. 2 pruebas end-to-end.
+  - `src/compartido/` sigue vacía (`.gitkeep`).
+  - `src/contratos/{pago,ejecucion,motor}.schema.ts` **todavía no existen** como contrato Zod compartido — los propone Dev 5 y Dev 1 los valida; mientras tanto se usan tipos provisionales en `src/servidor/reglas/tipos.ts`.
+  - **No implementado todavía:** conexión real a Supabase (sigue siendo en memoria) ni endpoints HTTP (`POST /api/v1/ejecuciones`, etc.).
