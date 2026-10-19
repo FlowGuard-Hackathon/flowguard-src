@@ -38,8 +38,9 @@ Ejecútalos desde la raíz del repositorio.
 | Ejecutar el flujo completo (motor → persistencia → agente) | `npx vitest run src/servidor/ejecuciones/flujoCompleto.test.ts` | 2 pruebas: pago bloqueado e informe `PARCIAL`; pago permitido e informe `COMPLETADA` |
 | Pruebas en modo observación | `npm run test:watch` | Reejecuta al guardar; se detiene con `Ctrl+C` |
 | Comprobar tipos | `npm run typecheck` | Sin salida de error y código de salida 0 |
+| Compilar (`src/` → `dist/`) | `npm run build` | `tsc -p tsconfig.build.json` sin errores; genera `dist/` (en `.gitignore`, nunca se sube). **Excluye los `*.test.ts`** |
 
-No existen scripts de `build`, `lint` ni `start`. No los inventes ni los agregues sin acordarlo con el propietario de la ruta.
+`npm run build` es necesario para que `flowguard-app` (o cualquier otro repo) pueda consumir este paquete: `package.json` apunta `main`/`exports` a `dist/index.js`, no a `src/`. Si cambias código en `src/`, repite `npm run build` para que quien dependa de este paquete vea el cambio. No existen scripts de `lint` ni `start`. No agregues otros sin acordarlo con el propietario de la ruta.
 
 ### 3. Antes de dar una tarea por terminada
 
@@ -65,7 +66,18 @@ Toda lógica nueva lleva su prueba en Vitest. Una tarea no está terminada solo 
 | `src/servidor/persistencia/` | Dev 1 | `fuenteDatosMemoria.ts` — implementación **en memoria** (no Supabase todavía) de `FuenteDatosHerramientas` (la interfaz de Dev 3). 5 pruebas |
 | `src/servidor/ejecuciones/` | Dev 1 | `crearEjecucion.ts` (motor → evidencia → persistencia) e `investigarEjecucion.ts` (llama al agente de Dev 3 con la ejecución ya persistida). 2 pruebas de integración end-to-end |
 | `src/compartido/` | Dev 1 | Carpeta vacía (`.gitkeep`) |
+| `src/index.ts` | Dev 1 | Punto de entrada público del paquete (lo que importa `flowguard-src` desde otro repo). Reexporta `crearEjecucion`, `investigarEjecucion`, `FuenteDatosMemoria`, `evaluarPago` y sus tipos |
 | `.env.example` | Compartido | Variables documentadas, con valores de ejemplo |
+
+## Consumido como dependencia local desde flowguard-app
+
+`flowguard-app` ya depende de este paquete (`"flowguard-src": "file:../flowguard-src"`) para una ruta de prueba (`app/api/v1/ejecuciones/route.ts` + `app/probar-backend/`, ver su README). Para que funcione:
+
+1. Este repo debe estar compilado: `npm run build` (genera `dist/`, lo único que `flowguard-app` importa).
+2. Debe existir como carpeta **hermana** de `flowguard-app` (mismo directorio padre).
+3. Después de cambiar código aquí, hay que repetir `npm run build` para que el otro repo vea el cambio (no hay watch automático entre repos).
+
+Detalle de un bug de Turbopack en Windows con esta dependencia local (y su solución) en el README de `flowguard-app`, § 2.
 
 ### 5. Qué hacer ahora
 
