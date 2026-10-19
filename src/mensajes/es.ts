@@ -43,6 +43,34 @@ Reglas obligatorias:
       accesoDatosNoDisponible: "El acceso a datos no está disponible.",
     },
   },
+  reglas: {
+    pag001: {
+      aprobada: (montoMxn: number) =>
+        `El importe de $${montoMxn} MXN tiene una aprobación válida registrada.`,
+      sinAprobacion: (montoMxn: number) =>
+        `El importe de $${montoMxn} MXN supera el umbral y no tiene una aprobación válida registrada.`,
+    },
+    pag002: {
+      noPermitida: (categoria: string) => `La categoría "${categoria}" no está en la lista de categorías permitidas.`,
+    },
+    pag003: {
+      mismaPersona: "El aprobador no puede ser la misma persona que el solicitante.",
+      aprobadorInvalido: "El aprobador asignado no está activo o no tiene permiso para aprobar.",
+    },
+    pag004: {
+      noVerificada: "No existe una factura confirmada por el backend para esta solicitud.",
+      fuenteNoDisponible: "La fuente de verificación de la factura no respondió.",
+    },
+    pag005: {
+      insuficiente: "El importe supera el saldo disponible del presupuesto.",
+      noVerificable: "El saldo disponible del presupuesto no se pudo verificar.",
+    },
+  },
+  ejecuciones: {
+    errores: {
+      ejecucionDuplicada: (id: string) => `Ya existe una ejecución con el identificador ${id}.`,
+    },
+  },
 };
 
 export type Mensajes = typeof mensajesEs;
