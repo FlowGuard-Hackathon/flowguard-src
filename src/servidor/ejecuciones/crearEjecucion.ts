@@ -139,6 +139,7 @@ export function crearEjecucion(
       estado_investigacion: decisionMotor.decision === "BLOQUEAR" ? "PENDIENTE" : "NO_INICIADA",
       version_motor: decisionMotor.version_motor,
       version_politica: decisionMotor.version_politica,
+      creado_en: new Date().toISOString(),
     },
     reglas: reglasConRefs,
     evidencias,

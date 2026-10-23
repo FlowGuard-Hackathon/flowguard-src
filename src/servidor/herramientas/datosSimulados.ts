@@ -36,6 +36,7 @@ const ejecucionBloqueada: EjecucionSimulada = {
     estado_investigacion: "PENDIENTE",
     version_motor: VERSION_MOTOR,
     version_politica: VERSION_POLITICA,
+    creado_en: "2026-10-15T18:04:12Z",
   },
   reglas: [
     {
@@ -138,6 +139,7 @@ const ejecucionPermitida: EjecucionSimulada = {
     estado_investigacion: "NO_INICIADA",
     version_motor: VERSION_MOTOR,
     version_politica: VERSION_POLITICA,
+    creado_en: "2026-10-16T09:12:00Z",
   },
   reglas: [
     {

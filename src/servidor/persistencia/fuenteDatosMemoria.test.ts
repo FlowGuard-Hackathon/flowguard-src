@@ -11,6 +11,7 @@ function ejecucionDeEjemplo(id: string): EjecucionAlmacenada {
       estado_investigacion: "PENDIENTE",
       version_motor: "1.0.0",
       version_politica: "politica-pagos-v1",
+      creado_en: "2026-10-18T12:00:00Z",
     },
     reglas: [
       {

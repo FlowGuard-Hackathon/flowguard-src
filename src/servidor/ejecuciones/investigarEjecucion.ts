@@ -20,9 +20,20 @@ export async function investigarEjecucion(
   crearHerramientasLectura(fuente);
 
   const agente = crearProveedorAgente();
-  return agente.investigar({
+  const investigacion = await agente.investigar({
     ejecucionId: resultado.ejecucion_id,
     decision: resultado.decision,
     infracciones: resultado.resultados.map((r) => ({ regla_id: r.regla_id, resultado: r.estado })),
   });
+
+  // Persiste el resultado y actualiza estado_investigacion (database.md § 2):
+  // lo hace el orquestador, nunca el modelo. Un FALLIDA no persiste informe
+  // (seguridad.md § 1.7: un informe que no valida no se guarda como COMPLETADA/PARCIAL).
+  fuente.guardarInformeAgente(resultado.ejecucion_id, {
+    intento_id: investigacion.estado === "FALLIDA" ? `INT-FALLIDO-${Date.now()}` : investigacion.informe.intento_id,
+    estado: investigacion.estado,
+    informe: investigacion.estado === "FALLIDA" ? null : investigacion.informe,
+  });
+
+  return investigacion;
 }

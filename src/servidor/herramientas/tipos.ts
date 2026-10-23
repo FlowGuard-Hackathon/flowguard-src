@@ -31,6 +31,7 @@ export type RegistroEjecucion = {
   estado_investigacion: EstadoInvestigacion;
   version_motor: string;
   version_politica: string;
+  creado_en: string; // ISO 8601
 };
 
 export type RegistroResultadoRegla = {
