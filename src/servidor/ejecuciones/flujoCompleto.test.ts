@@ -35,7 +35,7 @@ describe("Flujo completo: motor -> persistencia -> agente (Dev 1 llama a Dev 3)"
       presupuesto_disponible_centavos: 2_500_000,
     };
 
-    const resultado = crearEjecucion(fuente, pago, contexto, politica);
+    const resultado = await crearEjecucion(fuente, pago, contexto, politica);
     expect(resultado.decision).toBe("BLOQUEAR");
 
     // La ejecución ya quedó persistida antes de llamar al agente (contratos-api.md § 3).
@@ -72,7 +72,7 @@ describe("Flujo completo: motor -> persistencia -> agente (Dev 1 llama a Dev 3)"
       presupuesto_disponible_centavos: 2_500_000,
     };
 
-    const resultado = crearEjecucion(fuente, pago, contexto, politica);
+    const resultado = await crearEjecucion(fuente, pago, contexto, politica);
     expect(resultado.decision).toBe("PERMITIR");
 
     const investigacion = await investigarEjecucion(fuente, resultado);

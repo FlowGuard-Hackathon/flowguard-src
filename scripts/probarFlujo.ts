@@ -16,7 +16,7 @@ async function probar(nombre: string, pago: DatosPago, contexto: ContextoConfiab
   console.log(`\n=== ${nombre} ===`);
   const fuente = new FuenteDatosMemoria();
 
-  const resultado = crearEjecucion(fuente, pago, contexto, politica);
+  const resultado = await crearEjecucion(fuente, pago, contexto, politica);
   console.log("Decisión del motor:", resultado.decision);
   console.log("Resultados por regla:", resultado.resultados.map((r) => `${r.regla_id}=${r.estado}`).join(", "));
 

@@ -1,5 +1,5 @@
 import type { RegistroContextoPago, RegistroEvidencia, RegistroResultadoRegla } from "../herramientas/tipos.js";
-import { FuenteDatosMemoria } from "../persistencia/fuenteDatosMemoria.js";
+import type { FuenteDatosEjecuciones } from "../persistencia/fuenteDatosMemoria.js";
 import { evaluarPago } from "../reglas/motor.js";
 import type { ContextoConfiable, InstantaneaPolitica, ResultadoRegla, SolicitudPago } from "../reglas/tipos.js";
 
@@ -24,10 +24,24 @@ export type ResultadoCrearEjecucion = {
   resultados: ResultadoRegla[];
 };
 
-let contadorEjecucion = 0;
+// null = todavía no se sembró desde `destino` en este proceso.
+let contadorEjecucion: number | null = null;
 let contadorEvidencia = 0;
 
-function siguienteIdEjecucion(): string {
+// Con FuenteDatosMemoria el contador siempre arrancaba en 0 junto con el
+// almacén, así que nunca chocaba. Con FuenteDatosPostgres los datos
+// sobreviven a un reinicio de `npm run dev` pero este contador en memoria
+// no — sin esto, tras reiniciar, el primer EJE-0001 nuevo choca con el
+// EJE-0001 ya persistido (UNIQUE constraint). Se siembra una sola vez por
+// proceso a partir del máximo real guardado.
+async function siguienteIdEjecucion(destino: FuenteDatosEjecuciones): Promise<string> {
+  if (contadorEjecucion === null) {
+    const existentes = await destino.listarEjecuciones();
+    contadorEjecucion = existentes.reduce((maximo, e) => {
+      const n = Number(e.ejecucion_id.replace(/^EJE-/, ""));
+      return Number.isFinite(n) && n > maximo ? n : maximo;
+    }, 0);
+  }
   contadorEjecucion += 1;
   return `EJE-${String(contadorEjecucion).padStart(4, "0")}`;
 }
@@ -92,12 +106,12 @@ function construirEvidenciaParaRegla(resultado: ResultadoRegla): RegistroEvidenc
   }
 }
 
-export function crearEjecucion(
-  destino: FuenteDatosMemoria,
+export async function crearEjecucion(
+  destino: FuenteDatosEjecuciones,
   pago: DatosPago,
   contexto: ContextoConfiable,
   politica: InstantaneaPolitica,
-): ResultadoCrearEjecucion {
+): Promise<ResultadoCrearEjecucion> {
   const solicitud: SolicitudPago = {
     pago_id: pago.pago_id,
     monto_centavos: pago.monto_centavos,
@@ -106,7 +120,7 @@ export function crearEjecucion(
   };
 
   const decisionMotor = evaluarPago(solicitud, contexto, politica);
-  const ejecucionId = siguienteIdEjecucion();
+  const ejecucionId = await siguienteIdEjecucion(destino);
 
   const evidencias: RegistroEvidencia[] = [];
   const reglasConRefs: RegistroResultadoRegla[] = decisionMotor.resultados.map((r) => {
@@ -131,7 +145,7 @@ export function crearEjecucion(
       : null,
   };
 
-  destino.guardarEjecucion({
+  await destino.guardarEjecucion({
     ejecucion: {
       ejecucion_id: ejecucionId,
       decision: decisionMotor.decision,

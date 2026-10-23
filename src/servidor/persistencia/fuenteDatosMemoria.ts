@@ -37,13 +37,34 @@ export type EjecucionAlmacenada = {
   informeAgente?: InformeAgenteAlmacenado;
 };
 
-export class FuenteDatosMemoria implements FuenteDatosHerramientas {
+// Contrato común de persistencia que usan crearEjecucion()/investigarEjecucion()
+// (escritura) y el resto de la app (lectura en bloque para panel/solicitudes/
+// historial). FuenteDatosMemoria es la implementación de referencia, en memoria
+// del proceso; FuenteDatosPostgres (misma carpeta) implementa el mismo
+// contrato contra un Postgres real, para pruebas con datos persistentes entre
+// reinicios en vez de perderse con cada `npm run dev`.
+export interface FuenteDatosEjecuciones extends FuenteDatosHerramientas {
+  guardarEjecucion(datos: EjecucionAlmacenada): Promise<void>;
+  definirReglaPolitica(detalle: RegistroDetalleRegla): Promise<void>;
+  guardarInformeAgente(ejecucionId: string, informe: InformeAgenteAlmacenado): Promise<void>;
+  listarEjecuciones(): Promise<RegistroEjecucion[]>;
+  listarResumenEjecuciones(): Promise<
+    Array<{ ejecucion: RegistroEjecucion; contextoPago: RegistroContextoPago }>
+  >;
+  obtenerEvidencias(ejecucionId: string): Promise<RegistroEvidencia[] | null>;
+  obtenerInformeAgente(ejecucionId: string): Promise<InformeAgenteAlmacenado | null>;
+}
+
+export class FuenteDatosMemoria implements FuenteDatosEjecuciones {
   private readonly ejecuciones = new Map<string, EjecucionAlmacenada>();
   private readonly reglasPolitica = new Map<ReglaId, RegistroDetalleRegla>();
 
   // --- Escritura: solo la usa servidor/ejecuciones/ al persistir una decisión ---
+  // Async por contrato (FuenteDatosEjecuciones), aunque aquí no haya I/O real:
+  // así crearEjecucion()/investigarEjecucion() funcionan igual contra esta
+  // clase y contra FuenteDatosPostgres sin ramificar el código según cuál sea.
 
-  guardarEjecucion(datos: EjecucionAlmacenada): void {
+  async guardarEjecucion(datos: EjecucionAlmacenada): Promise<void> {
     const id = datos.ejecucion.ejecucion_id;
     if (this.ejecuciones.has(id)) {
       throw new Error(mensajes.ejecuciones.errores.ejecucionDuplicada(id));
@@ -51,7 +72,7 @@ export class FuenteDatosMemoria implements FuenteDatosHerramientas {
     this.ejecuciones.set(id, structuredClone(datos));
   }
 
-  definirReglaPolitica(detalle: RegistroDetalleRegla): void {
+  async definirReglaPolitica(detalle: RegistroDetalleRegla): Promise<void> {
     this.reglasPolitica.set(detalle.regla_id, structuredClone(detalle));
   }
 
@@ -59,7 +80,7 @@ export class FuenteDatosMemoria implements FuenteDatosHerramientas {
   // en la ejecución (database.md § 2: lo cambia exclusivamente el worker/orquestador,
   // nunca el modelo directamente). Silenciosamente no hace nada si la ejecución
   // ya no existe (no debería pasar en memoria, pero sí podría con Supabase real).
-  guardarInformeAgente(ejecucionId: string, informe: InformeAgenteAlmacenado): void {
+  async guardarInformeAgente(ejecucionId: string, informe: InformeAgenteAlmacenado): Promise<void> {
     const encontrada = this.ejecuciones.get(ejecucionId);
     if (!encontrada) return;
     encontrada.informeAgente = structuredClone(informe);

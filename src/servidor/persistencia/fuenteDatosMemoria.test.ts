@@ -55,8 +55,8 @@ describe("FuenteDatosMemoria", () => {
 
   it("devuelve null si la ref_evidencia pertenece a otra ejecución", async () => {
     const fuente = new FuenteDatosMemoria();
-    fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"));
-    fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0002"));
+    await fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"));
+    await fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0002"));
 
     expect(await fuente.obtenerEvidencia("EJE-0002", "EV-0001")).not.toBeNull();
     // EV-0001 de EJE-0001 no debe resolverse al pedirla desde EJE-0002... pero como
@@ -64,15 +64,15 @@ describe("FuenteDatosMemoria", () => {
     expect(await fuente.obtenerEvidencia("EJE-0001", "EV-NO-EXISTE")).toBeNull();
   });
 
-  it("lanza (throw) solo cuando se intenta guardar un id duplicado", () => {
+  it("lanza (throw) solo cuando se intenta guardar un id duplicado", async () => {
     const fuente = new FuenteDatosMemoria();
-    fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"));
-    expect(() => fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"))).toThrow();
+    await fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"));
+    await expect(fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"))).rejects.toThrow();
   });
 
   it("devuelve clones: mutar el resultado no afecta el almacén", async () => {
     const fuente = new FuenteDatosMemoria();
-    fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"));
+    await fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"));
 
     const primeraLectura = await fuente.obtenerEjecucion("EJE-0001");
     primeraLectura!.decision = "PERMITIR";
@@ -83,7 +83,7 @@ describe("FuenteDatosMemoria", () => {
 
   it("funciona end-to-end a través de crearHerramientasLectura() (la interfaz real que usa el agente)", async () => {
     const fuente = new FuenteDatosMemoria();
-    fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"));
+    await fuente.guardarEjecucion(ejecucionDeEjemplo("EJE-0001"));
     const herramientas = crearHerramientasLectura(fuente);
 
     const res = await herramientas.obtener_ejecucion({ ejecucion_id: "EJE-0001" });

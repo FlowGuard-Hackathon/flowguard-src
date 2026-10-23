@@ -4,7 +4,13 @@
 
 export { crearEjecucion, type DatosPago, type ResultadoCrearEjecucion } from "./servidor/ejecuciones/crearEjecucion.js";
 export { investigarEjecucion } from "./servidor/ejecuciones/investigarEjecucion.js";
-export { FuenteDatosMemoria, type InformeAgenteAlmacenado } from "./servidor/persistencia/fuenteDatosMemoria.js";
+export {
+  FuenteDatosMemoria,
+  type EjecucionAlmacenada,
+  type FuenteDatosEjecuciones,
+  type InformeAgenteAlmacenado,
+} from "./servidor/persistencia/fuenteDatosMemoria.js";
+export { FuenteDatosPostgres } from "./servidor/persistencia/fuenteDatosPostgres.js";
 export { evaluarPago } from "./servidor/reglas/motor.js";
 export type {
   ContextoConfiable,
